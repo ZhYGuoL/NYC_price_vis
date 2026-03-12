@@ -129,7 +129,7 @@ function initMap() {
     else map.removeLayer(markerLayer);
   });
 
-  // Stats
+  // Stats (listings.json is already filtered to 5 boroughs by prepare_data.py)
   const prices = listings.map((l) => l.price).filter((p) => p != null && p > 0);
   document.getElementById("statCount").textContent = listings.length.toLocaleString();
   document.getElementById("statPrice").textContent = formatPrice(median(prices));
