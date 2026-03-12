@@ -68,10 +68,22 @@ function updateSideCard(listing) {
 }
 
 function initMap() {
+  // Stable container: ensure map has dimensions before init
+  const mapEl = document.getElementById("map");
+  mapEl.style.height = "100%";
+  mapEl.style.width = "100%";
+
   map = L.map("map", {
     center: NYC_CENTER,
     zoom: NYC_ZOOM,
-    scrollWheelZoom: true,
+    scrollWheelZoom: false,
+    zoomSnap: 0,
+    zoomDelta: 0.5,
+    butterSmoothZoom: true,
+    butterSmoothScale: 0.0025,
+    butterSmoothEasing: 0.28,
+    butterSmoothEndDelay: 180,
+    butterSmoothZoomAnimationDuration: 0.2,
   });
 
   // Subtle base – no bright tiles; use a light style that fits beige theme
@@ -96,8 +108,9 @@ function initMap() {
     },
   }).addTo(map);
 
-  // Markers
-  markerLayer = L.layerGroup().addTo(map);
+  // Markers – start hidden to avoid lag with many listings
+  markerLayer = L.layerGroup();
+  if (document.getElementById("toggleMarkers").checked) map.addLayer(markerLayer);
   listings.forEach((listing) => {
     const marker = L.marker([listing.lat, listing.lng], { icon: createMarkerIcon() });
     marker.bindPopup(popupContent(listing), { className: "card-panel" });
@@ -120,6 +133,11 @@ function initMap() {
   const prices = listings.map((l) => l.price).filter((p) => p != null && p > 0);
   document.getElementById("statCount").textContent = listings.length.toLocaleString();
   document.getElementById("statPrice").textContent = formatPrice(median(prices));
+
+  // Ensure map fills container after layout (prevents jump on first interaction)
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+  });
 }
 
 async function loadData() {
