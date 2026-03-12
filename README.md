@@ -1,0 +1,45 @@
+# NYC Apartment Cost Viewer
+
+Interactive map of NYC apartment listings (5 boroughs only) with a cost heatmap and individual markers. Styled after a vintage punch-card aesthetic: warm beige background, terracotta/coral accents, clean sans-serif typography.
+
+## Data
+
+Uses the [New York Housing Market](https://www.kaggle.com/datasets/nelgiriyewithana/new-york-housing-market) dataset from Kaggle. Listings are **filtered to the 5 boroughs** using address/ZIP (parsed from the `STATE` column, e.g. `"New York, NY 10022"`).
+
+## Setup
+
+1. **Prepare data** (if you have the CSV):
+   ```bash
+   python3 scripts/prepare_data.py
+   ```
+   Place `NY-House-Dataset.csv` in the project root or in `data/`, or pass its path:
+   ```bash
+   python3 scripts/prepare_data.py /path/to/NY-House-Dataset.csv
+   ```
+   This writes `data/listings.json` (already generated if the CSV is in the repo).
+
+2. **Serve the app** (required — `fetch()` needs HTTP):
+   ```bash
+   npx serve .
+   ```
+   Or:
+   ```bash
+   python3 -m http.server 8000
+   ```
+   Then open http://localhost:3000 (serve) or http://localhost:8000 (Python).
+
+## Features
+
+- **Scrollable interactive map** (Leaflet) centered on NYC
+- **Heatmap** of listing costs (terracotta gradient); toggle in the sidebar
+- **Markers** for each listing; click for popup and sidebar details
+- **Legend** and **stats** (listing count, median price)
+
+## Project layout
+
+- `index.html` — App shell and map container
+- `style.css` — Punch-card theme (beige, coral, grid layout)
+- `app.js` — Map init, heatmap, markers, toggles
+- `data/listings.json` — Prepared listings (5 boroughs, lat/lng)
+- `scripts/prepare_data.py` — Filter CSV by borough ZIP, output JSON
+- `scripts/nyc_zip_centroids.json` — ZIP → (lat, lng) for rows without coordinates

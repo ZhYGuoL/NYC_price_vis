@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Apartment Cost Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="card-header">
+      <div class="card-title">NYC APARTMENT COST VIEWER</div>
+      <div class="card-meta">
+        <span class="meta-item">5 BOROUGHS</span>
+        <span class="meta-item">HEATMAP + LISTINGS</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <aside class="panel card-panel">
+        <div class="panel-title">LEGEND</div>
+        <div class="heat-legend">
+          <span class="legend-label">LOW</span>
+          <div class="legend-bar"></div>
+          <span class="legend-label">HIGH</span>
+        </div>
+        <div class="panel-title">CONTROLS</div>
+        <label class="control">
+          <input type="checkbox" id="toggleHeatmap" checked />
+          <span>Heatmap</span>
+        </label>
+        <label class="control">
+          <input type="checkbox" id="toggleMarkers" checked />
+          <span>Markers</span>
+        </label>
+        <div class="panel-title">STATS</div>
+        <div class="stat" id="statCount">—</div>
+        <div class="stat-label">Listings</div>
+        <div class="stat" id="statPrice">—</div>
+        <div class="stat-label">Median price</div>
+      </aside>
+
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="map-overlay card-panel" id="listingCard">
+          <div class="listing-card-title">LISTING</div>
+          <div id="listingContent">Select a marker</div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="card-footer">
+      <span>DATA: KAGGLE NEW YORK HOUSING MARKET</span>
+      <span>5 BOROUGHS (ZIP)</span>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

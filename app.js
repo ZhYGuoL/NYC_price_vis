@@ -1,0 +1,146 @@
+/**
+ * NYC Apartment Cost Viewer – scrollable map with heatmap + markers.
+ * Loads data/listings.json (generate via scripts/prepare_data.py from NY-House-Dataset.csv).
+ */
+
+const NYC_CENTER = [40.7128, -74.006];
+const NYC_ZOOM = 11;
+
+let map;
+let heatLayer;
+let markerLayer;
+let listings = [];
+
+function formatPrice(n) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+}
+
+function median(arr) {
+  if (!arr.length) return null;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function buildHeatPoints() {
+  const valid = listings.filter((l) => l.price != null && l.price > 0);
+  if (!valid.length) return [];
+  const maxPrice = Math.max(...valid.map((l) => l.price));
+  const minPrice = Math.min(...valid.map((l) => l.price));
+  const range = maxPrice - minPrice || 1;
+  return valid.map((l) => [l.lat, l.lng, (l.price - minPrice) / range]);
+}
+
+function createMarkerIcon() {
+  return L.divIcon({
+    className: "marker-pin",
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+}
+
+function popupContent(listing) {
+  const parts = [];
+  if (listing.price != null) parts.push(`<span class="popup-price">${formatPrice(listing.price)}</span>`);
+  if (listing.address) parts.push(listing.address);
+  if (listing.zip) parts.push(`ZIP ${listing.zip}`);
+  if (listing.beds != null) parts.push(`${listing.beds} bed`);
+  if (listing.baths != null) parts.push(`${listing.baths} bath`);
+  if (listing.type) parts.push(listing.type);
+  return parts.join(" · ") || "—";
+}
+
+function updateSideCard(listing) {
+  const el = document.getElementById("listingContent");
+  if (!listing) {
+    el.textContent = "Select a marker";
+    return;
+  }
+  const lines = [];
+  if (listing.price != null) lines.push(`Price: ${formatPrice(listing.price)}`);
+  if (listing.address) lines.push(listing.address);
+  if (listing.zip) lines.push(`ZIP: ${listing.zip}`);
+  if (listing.beds != null) lines.push(`Beds: ${listing.beds}`);
+  if (listing.baths != null) lines.push(`Baths: ${listing.baths}`);
+  if (listing.type) lines.push(`Type: ${listing.type}`);
+  el.innerHTML = lines.join("<br/>");
+}
+
+function initMap() {
+  map = L.map("map", {
+    center: NYC_CENTER,
+    zoom: NYC_ZOOM,
+    scrollWheelZoom: true,
+  });
+
+  // Subtle base – no bright tiles; use a light style that fits beige theme
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
+    attribution: "&copy; OSM, Carto",
+    maxZoom: 19,
+  }).addTo(map);
+
+  // Heatmap – gradient in terracotta/coral
+  const points = buildHeatPoints();
+  heatLayer = L.heatLayer(points, {
+    radius: 28,
+    blur: 20,
+    maxZoom: 16,
+    minOpacity: 0.35,
+    max: 1,
+    gradient: {
+      0.0: "rgba(247, 242, 235, 0)",
+      0.3: "rgba(217, 140, 129, 0.4)",
+      0.6: "rgba(201, 123, 110, 0.75)",
+      1.0: "rgba(184, 106, 94, 0.9)",
+    },
+  }).addTo(map);
+
+  // Markers
+  markerLayer = L.layerGroup().addTo(map);
+  listings.forEach((listing) => {
+    const marker = L.marker([listing.lat, listing.lng], { icon: createMarkerIcon() });
+    marker.bindPopup(popupContent(listing), { className: "card-panel" });
+    marker.listing = listing;
+    marker.on("click", () => updateSideCard(listing));
+    markerLayer.addLayer(marker);
+  });
+
+  // Toggles
+  document.getElementById("toggleHeatmap").addEventListener("change", (e) => {
+    if (e.target.checked) map.addLayer(heatLayer);
+    else map.removeLayer(heatLayer);
+  });
+  document.getElementById("toggleMarkers").addEventListener("change", (e) => {
+    if (e.target.checked) map.addLayer(markerLayer);
+    else map.removeLayer(markerLayer);
+  });
+
+  // Stats
+  const prices = listings.map((l) => l.price).filter((p) => p != null && p > 0);
+  document.getElementById("statCount").textContent = listings.length.toLocaleString();
+  document.getElementById("statPrice").textContent = formatPrice(median(prices));
+}
+
+async function loadData() {
+  try {
+    const res = await fetch("data/listings.json");
+    if (!res.ok) throw new Error(res.statusText);
+    listings = await res.json();
+  } catch (e) {
+    console.error("Failed to load data/listings.json:", e);
+    document.getElementById("listingContent").innerHTML =
+      "No data. Run: <code>pip install pandas && python scripts/prepare_data.py</code> and place <code>NY-House-Dataset.csv</code> in <code>data/</code>.";
+    document.getElementById("statCount").textContent = "0";
+    document.getElementById("statPrice").textContent = "—";
+    return;
+  }
+  if (listings.length) initMap();
+  else {
+    document.getElementById("listingContent").textContent = "No listings in 5 boroughs.";
+    document.getElementById("statCount").textContent = "0";
+    document.getElementById("statPrice").textContent = "—";
+  }
+}
+
+loadData();
