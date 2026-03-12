@@ -92,7 +92,7 @@ function initMap() {
     maxZoom: 19,
   }).addTo(map);
 
-  // Heatmap – gradient in terracotta/coral
+  // Heatmap – gradient in terracotta/coral; only add if checkbox is checked (matches state after reload)
   const points = buildHeatPoints();
   heatLayer = L.heatLayer(points, {
     radius: 28,
@@ -106,7 +106,8 @@ function initMap() {
       0.6: "rgba(201, 123, 110, 0.75)",
       1.0: "rgba(184, 106, 94, 0.9)",
     },
-  }).addTo(map);
+  });
+  if (document.getElementById("toggleHeatmap").checked) map.addLayer(heatLayer);
 
   // Markers – start hidden to avoid lag with many listings
   markerLayer = L.layerGroup();
