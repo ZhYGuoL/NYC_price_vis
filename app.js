@@ -1,6 +1,6 @@
 /**
  * NYC Apartment Cost Viewer – scrollable map with heatmap + markers.
- * Loads data/listings.json (generate via scripts/prepare_data.py from NY-House-Dataset.csv).
+ * Loads data/listings.json (generate via scripts/prepare_data.py from assignmentStuff/NY-House-Dataset-5boroughs.csv).
  */
 
 const NYC_CENTER = [40.7128, -74.006];
@@ -88,9 +88,10 @@ function initMap() {
 
   // Subtle base – no bright tiles; use a light style that fits beige theme
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; OSM, Carto",
+    attribution: "",
     maxZoom: 19,
   }).addTo(map);
+  map.removeControl(map.attributionControl);
 
   // Heatmap – gradient in terracotta/coral; only add if checkbox is checked (matches state after reload)
   const points = buildHeatPoints();
@@ -149,7 +150,7 @@ async function loadData() {
   } catch (e) {
     console.error("Failed to load data/listings.json:", e);
     document.getElementById("listingContent").innerHTML =
-      "No data. Run: <code>pip install pandas && python scripts/prepare_data.py</code> and place <code>NY-House-Dataset.csv</code> in <code>data/</code>.";
+      "No data. Run: <code>python scripts/prepare_data.py</code> (uses <code>assignmentStuff/NY-House-Dataset-5boroughs.csv</code>).";
     document.getElementById("statCount").textContent = "0";
     document.getElementById("statPrice").textContent = "—";
     return;
