@@ -6,6 +6,14 @@
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM = 11;
 
+/* Heatmap gradient: cream → dollar green (paper style, matches lighter green) */
+const HEAT_GRADIENT = {
+  0.0: "rgba(242, 237, 228, 0)",
+  0.3: "rgba(93, 138, 88, 0.4)",
+  0.6: "rgba(61, 74, 60, 0.65)",
+  1.0: "rgba(53, 64, 50, 0.9)",
+};
+
 let map;
 let heatLayer;
 let markerLayer;
@@ -93,7 +101,7 @@ function initMap() {
   }).addTo(map);
   map.removeControl(map.attributionControl);
 
-  // Heatmap – gradient in terracotta/coral; only add if checkbox is checked (matches state after reload)
+  // Heatmap – cream-to-green gradient (paper style)
   const points = buildHeatPoints();
   heatLayer = L.heatLayer(points, {
     radius: 28,
@@ -101,12 +109,7 @@ function initMap() {
     maxZoom: 16,
     minOpacity: 0.35,
     max: 1,
-    gradient: {
-      0.0: "rgba(247, 242, 235, 0)",
-      0.3: "rgba(217, 140, 129, 0.4)",
-      0.6: "rgba(201, 123, 110, 0.75)",
-      1.0: "rgba(184, 106, 94, 0.9)",
-    },
+    gradient: HEAT_GRADIENT,
   });
   if (document.getElementById("toggleHeatmap").checked) map.addLayer(heatLayer);
 

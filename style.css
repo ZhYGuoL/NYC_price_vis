@@ -1,14 +1,14 @@
-/* Punch-card aesthetic: warm beige, muted terracotta/coral, structured grid */
+/* Dollar-bill / vintage job card: green + cream paper, fibrous texture */
 
 :root {
-  --bg: #F7F2EB;
-  --bg-panel: #FBF8F4;
-  --accent: #C97B6E;
-  --accent-strong: #B86A5E;
-  --accent-muted: #D98C81;
-  --text: #2C2524;
-  --border: #D98C81;
-  --border-light: rgba(201, 123, 110, 0.35);
+  --bg: #468C60;
+  --bg-panel: #f2ede4;
+  --accent: #3d4a3c;
+  --accent-strong: #354032;
+  --accent-muted: #5a7d55;
+  --text: #2c3029;
+  --border: #4d7348;
+  --border-light: rgba(61, 74, 60, 0.35);
 }
 
 * {
@@ -24,12 +24,24 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Subtle paper texture */
+/* Paper shader on green: fibrous grain + mottling so it reads as paper */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.9' intercept='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Second layer: larger-scale mottling (paper texture) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.25' intercept='0.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
   pointer-events: none;
   z-index: 0;
 }
@@ -42,27 +54,56 @@ body::before {
   z-index: 1;
 }
 
-/* Header – punch card title strip */
+/* Header – job card strip with paper texture on green */
 .card-header {
+  position: relative;
   padding: 0.75rem 1.25rem;
   border-bottom: 2px solid var(--border);
-  background: var(--bg-panel);
+  background: var(--bg);
+  color: var(--bg-panel);
+  overflow: hidden;
 }
 
+.card-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='nh'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.9' intercept='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23nh)' opacity='0.14'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='mh'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.25' intercept='0.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23mh)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-header .card-title,
 .card-title {
+  position: relative;
+  z-index: 1;
   font-size: 0.95rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--accent-strong);
+  color: var(--bg-panel);
 }
 
+.card-header .card-meta,
 .card-meta {
+  position: relative;
+  z-index: 1;
   margin-top: 0.35rem;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--accent-muted);
+  color: rgba(242, 237, 228, 0.85);
 }
 
 .meta-item + .meta-item::before {
@@ -82,6 +123,17 @@ body::before {
   background: var(--bg-panel);
   border: 1px solid var(--border-light);
   padding: 1rem 1.25rem;
+  position: relative;
+}
+
+/* Subtle paper grain on cream panels */
+.card-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 .panel {
@@ -253,14 +305,42 @@ body::before {
   box-shadow: 0 0 0 2px var(--bg-panel);
 }
 
-/* Footer */
+/* Footer – green bar with paper texture, cream text (match header) */
 .card-footer {
+  position: relative;
   padding: 0.5rem 1.25rem;
-  border-top: 1px solid var(--border-light);
+  border-top: 2px solid var(--border);
+  background: var(--bg);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--accent-muted);
+  color: rgba(242, 237, 228, 0.9);
+  overflow: hidden;
+}
+
+.card-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='nf'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.9' intercept='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23nf)' opacity='0.14'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-footer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='mf'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.25' intercept='0.1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23mf)' opacity='0.5'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-footer span {
+  position: relative;
+  z-index: 1;
 }
 
 .card-footer span + span::before {
