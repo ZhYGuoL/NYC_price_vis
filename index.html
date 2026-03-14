@@ -41,6 +41,21 @@
         <div class="stat-label">Listings</div>
         <div class="stat" id="statPrice">—</div>
         <div class="stat-label">Median price</div>
+        <div class="panel-title">PREDICT PRICE</div>
+        <form id="predictForm" class="predict-form">
+          <label class="predict-label">Beds</label>
+          <input type="number" id="predictBeds" min="0" max="20" value="2" class="predict-input" />
+          <label class="predict-label">Baths</label>
+          <input type="number" id="predictBaths" min="0" step="0.5" max="20" value="1" class="predict-input" />
+          <label class="predict-label">Sq ft</label>
+          <input type="number" id="predictSqft" min="1" value="1000" class="predict-input" />
+          <label class="predict-label">Type</label>
+          <select id="predictType" class="predict-input"></select>
+          <label class="predict-label">ZIP (5 boroughs)</label>
+          <input type="text" id="predictZip" placeholder="e.g. 10022" class="predict-input" maxlength="5" />
+          <button type="submit" class="predict-btn">Predict price</button>
+        </form>
+        <div id="predictResult" class="predict-result" aria-live="polite"></div>
       </aside>
 
       <div class="map-wrap">

@@ -137,12 +137,13 @@ body::after {
 }
 
 .panel {
-  width: 200px;
+  width: 220px;
   flex-shrink: 0;
   border-right: 2px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow-y: auto;
 }
 
 .panel-title {
@@ -209,6 +210,66 @@ body::after {
   letter-spacing: 0.08em;
   color: var(--accent-muted);
   margin-top: -0.25rem;
+}
+
+/* Predict price form */
+.predict-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.predict-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-muted);
+  margin-top: 0.25rem;
+}
+.predict-label:first-of-type {
+  margin-top: 0;
+}
+.predict-input {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-light);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-family: inherit;
+}
+.predict-input:focus {
+  outline: none;
+  border-color: var(--accent-muted);
+}
+.predict-btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--accent);
+  color: var(--bg-panel);
+  border: 1px solid var(--accent-strong);
+  cursor: pointer;
+  font-family: inherit;
+}
+.predict-btn:hover {
+  background: var(--accent-strong);
+}
+.predict-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.predict-result {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  min-height: 1.5em;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.predict-result.error {
+  color: #a03030;
+  font-weight: normal;
 }
 
 /* Map container – fills remaining height; no overflow scroll so map size is stable */

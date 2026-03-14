@@ -5,6 +5,7 @@
 
 const NYC_CENTER = [40.7128, -74.006];
 const NYC_ZOOM = 11;
+const PREDICT_API_BASE = "http://127.0.0.1:5000";
 
 /* Heatmap gradient: cream → dollar green (paper style, matches lighter green) */
 const HEAT_GRADIENT = {
@@ -17,6 +18,7 @@ const HEAT_GRADIENT = {
 let map;
 let heatLayer;
 let markerLayer;
+let predictedMarkerLayer;
 let listings = [];
 
 function formatPrice(n) {
@@ -116,6 +118,8 @@ function initMap() {
   // Markers – start hidden to avoid lag with many listings
   markerLayer = L.layerGroup();
   if (document.getElementById("toggleMarkers").checked) map.addLayer(markerLayer);
+  predictedMarkerLayer = L.layerGroup();
+  map.addLayer(predictedMarkerLayer);
   listings.forEach((listing) => {
     const marker = L.marker([listing.lat, listing.lng], { icon: createMarkerIcon() });
     marker.bindPopup(popupContent(listing), { className: "card-panel" });
@@ -139,9 +143,99 @@ function initMap() {
   document.getElementById("statCount").textContent = listings.length.toLocaleString();
   document.getElementById("statPrice").textContent = formatPrice(median(prices));
 
+  // Predict form
+  setupPredictForm();
+
   // Ensure map fills container after layout (prevents jump on first interaction)
   requestAnimationFrame(() => {
     map.invalidateSize();
+  });
+}
+
+async function fetchTypes() {
+  try {
+    const res = await fetch(`${PREDICT_API_BASE}/types`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.types || [];
+  } catch {
+    return [];
+  }
+}
+
+function setupPredictForm() {
+  const form = document.getElementById("predictForm");
+  const typeSelect = document.getElementById("predictType");
+  const resultEl = document.getElementById("predictResult");
+
+  (async () => {
+    const types = await fetchTypes();
+    typeSelect.innerHTML = "";
+    if (types.length) {
+      types.forEach((t) => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        typeSelect.appendChild(opt);
+      });
+    } else {
+      const opt = document.createElement("option");
+      opt.value = "Condo for sale";
+      opt.textContent = "Condo for sale";
+      typeSelect.appendChild(opt);
+    }
+  })();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    resultEl.textContent = "Predicting…";
+    resultEl.classList.remove("error");
+    const beds = parseInt(document.getElementById("predictBeds").value, 10) || 0;
+    const baths = parseFloat(document.getElementById("predictBaths").value) || 0;
+    const property_sqft = parseFloat(document.getElementById("predictSqft").value) || 0;
+    const type = typeSelect.value || "Condo for sale";
+    const zip = (document.getElementById("predictZip").value || "").replace(/\D/g, "").slice(0, 5);
+
+    try {
+      const res = await fetch(`${PREDICT_API_BASE}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ beds, baths, property_sqft, type, zip }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        resultEl.textContent = data.error || "Prediction failed";
+        resultEl.classList.add("error");
+        return;
+      }
+      const price = data.predicted_price;
+      resultEl.textContent = `Predicted: ${formatPrice(price)}`;
+      resultEl.classList.remove("error");
+
+      if (typeof map !== "undefined" && map && predictedMarkerLayer && data.lat != null && data.lng != null) {
+        predictedMarkerLayer.clearLayers();
+        const listing = {
+          lat: data.lat,
+          lng: data.lng,
+          price,
+          address: "",
+          zip: zip || null,
+          beds,
+          baths,
+          type,
+          isPredicted: true,
+        };
+        const marker = L.marker([data.lat, data.lng], { icon: createMarkerIcon() });
+        marker.bindPopup(`Predicted: ${formatPrice(price)} · ${beds} bed, ${baths} bath · ${type}`, { className: "card-panel" });
+        marker.listing = listing;
+        marker.on("click", () => updateSideCard(listing));
+        predictedMarkerLayer.addLayer(marker);
+        map.setView([data.lat, data.lng], Math.max(map.getZoom(), 13));
+      }
+    } catch (err) {
+      resultEl.textContent = "Server not running? Start with: python server/app.py";
+      resultEl.classList.add("error");
+    }
   });
 }
 
@@ -163,6 +257,7 @@ async function loadData() {
     document.getElementById("listingContent").textContent = "No listings in 5 boroughs.";
     document.getElementById("statCount").textContent = "0";
     document.getElementById("statPrice").textContent = "—";
+    setupPredictForm();
   }
 }
 
