@@ -63,6 +63,7 @@ def load_artifacts():
 
 @APP.route("/predict", methods=["OPTIONS"])
 @APP.route("/types", methods=["OPTIONS"])
+@APP.route("/zip-from-location", methods=["OPTIONS"])
 def _options():
     return "", 204
 
@@ -71,6 +72,28 @@ def _options():
 def get_types():
     load_artifacts()
     return jsonify({"types": _type_labels})
+
+
+@APP.route("/zip-from-location", methods=["GET"])
+def zip_from_location():
+    """Return the closest 5-borough ZIP for a given lat/lng (from centroid list)."""
+    load_artifacts()
+    try:
+        lat = float(request.args.get("lat"))
+        lng = float(request.args.get("lng"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat and lng required"}), 400
+    if not _zip_centroids:
+        return jsonify({"zip": None})
+    best_zip = None
+    best_d2 = float("inf")
+    for zip_code, coords in _zip_centroids.items():
+        clat, clng = coords[0], coords[1]
+        d2 = (lat - clat) ** 2 + (lng - clng) ** 2
+        if d2 < best_d2:
+            best_d2 = d2
+            best_zip = zip_code
+    return jsonify({"zip": best_zip})
 
 
 @APP.route("/predict", methods=["POST"])
@@ -83,6 +106,8 @@ def predict():
         property_sqft = float(body.get("property_sqft", 0))
         type_name = str(body.get("type", "")).strip() or _type_labels[0]
         zip_code = str(body.get("zip", "")).strip()
+        lat_in = body.get("lat")
+        lng_in = body.get("lng")
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid numeric fields"}), 400
 
@@ -91,7 +116,15 @@ def predict():
     type_encoded = _type_encoder.transform([type_name])[0]
 
     lat, lng = 40.7128, -74.006  # NYC default
-    if zip_code and zip_code in _zip_centroids:
+    use_pin = False
+    if lat_in is not None and lng_in is not None:
+        try:
+            lat = float(lat_in)
+            lng = float(lng_in)
+            use_pin = True
+        except (TypeError, ValueError):
+            pass
+    if not use_pin and zip_code and zip_code in _zip_centroids:
         lat, lng = _zip_centroids[zip_code]
 
     X = [[beds, baths, property_sqft, type_encoded, lat, lng]]

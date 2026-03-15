@@ -51,8 +51,13 @@
           <input type="number" id="predictSqft" min="1" value="1000" class="predict-input" />
           <label class="predict-label">Type</label>
           <select id="predictType" class="predict-input"></select>
-          <label class="predict-label">ZIP (5 boroughs)</label>
-          <input type="text" id="predictZip" placeholder="e.g. 10022" class="predict-input" maxlength="5" />
+          <label class="predict-label">Location</label>
+          <div class="predict-location-row">
+            <button type="button" id="dropPinBtn" class="predict-btn predict-btn-secondary">Drop pin on map</button>
+          </div>
+          <div id="predictLocationStatus" class="predict-location-status">Drop a pin to set location</div>
+          <label class="predict-label">ZIP (from pin)</label>
+          <div id="predictZip" class="predict-zip-display" aria-live="polite">—</div>
           <button type="submit" class="predict-btn">Predict price</button>
         </form>
         <div id="predictResult" class="predict-result" aria-live="polite"></div>

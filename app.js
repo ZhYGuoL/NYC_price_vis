@@ -19,7 +19,10 @@ let map;
 let heatLayer;
 let markerLayer;
 let predictedMarkerLayer;
+let predictionLocationMarker = null;
+let dropPinMode = false;
 let listings = [];
+let zipCentroids = null;
 
 function formatPrice(n) {
   if (n == null || Number.isNaN(n)) return "—";
@@ -120,6 +123,7 @@ function initMap() {
   if (document.getElementById("toggleMarkers").checked) map.addLayer(markerLayer);
   predictedMarkerLayer = L.layerGroup();
   map.addLayer(predictedMarkerLayer);
+  map.on("click", onMapClickForPin);
   listings.forEach((listing) => {
     const marker = L.marker([listing.lat, listing.lng], { icon: createMarkerIcon() });
     marker.bindPopup(popupContent(listing), { className: "card-panel" });
@@ -163,10 +167,116 @@ async function fetchTypes() {
   }
 }
 
+function createLocationPinIcon() {
+  return L.divIcon({
+    className: "marker-pin marker-pin-location",
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
+async function loadZipCentroids() {
+  if (zipCentroids) return zipCentroids;
+  try {
+    const res = await fetch("scripts/nyc_zip_centroids.json");
+    if (!res.ok) return null;
+    zipCentroids = await res.json();
+    return zipCentroids;
+  } catch {
+    return null;
+  }
+}
+
+function findClosestZip(lat, lng) {
+  if (!zipCentroids || typeof zipCentroids !== "object") return null;
+  let bestZip = null;
+  let bestD2 = Infinity;
+  for (const [zip, coords] of Object.entries(zipCentroids)) {
+    const clat = coords[0];
+    const clng = coords[1];
+    const d2 = (lat - clat) ** 2 + (lng - clng) ** 2;
+    if (d2 < bestD2) {
+      bestD2 = d2;
+      bestZip = zip;
+    }
+  }
+  return bestZip;
+}
+
+async function getZipForLocation(lat, lng) {
+  await loadZipCentroids();
+  const zip = findClosestZip(lat, lng);
+  if (zip != null) return zip;
+  try {
+    const res = await fetch(`${PREDICT_API_BASE}/zip-from-location?lat=${lat}&lng=${lng}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.zip || null;
+  } catch {
+    return null;
+  }
+}
+
+function setPredictZipDisplay(zip) {
+  const el = document.getElementById("predictZip");
+  if (el) el.textContent = zip != null ? String(zip) : "—";
+}
+
+function getPredictZipValue() {
+  const el = document.getElementById("predictZip");
+  if (!el) return "";
+  const t = el.textContent || el.innerText || "";
+  return t.replace(/\D/g, "").slice(0, 5);
+}
+
+async function updatePredictLocationStatus() {
+  const statusEl = document.getElementById("predictLocationStatus");
+  if (predictionLocationMarker) {
+    const latlng = predictionLocationMarker.getLatLng();
+    if (statusEl) statusEl.textContent = `Pin at ${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    const zip = await getZipForLocation(latlng.lat, latlng.lng);
+    setPredictZipDisplay(zip);
+  } else {
+    if (statusEl) statusEl.textContent = "Drop a pin to set location";
+    setPredictZipDisplay(null);
+  }
+}
+
+function onMapClickForPin(e) {
+  if (!dropPinMode || !map || !predictedMarkerLayer) return;
+  const { lat, lng } = e.latlng;
+  if (predictionLocationMarker) predictedMarkerLayer.removeLayer(predictionLocationMarker);
+  predictionLocationMarker = L.marker([lat, lng], {
+    icon: createLocationPinIcon(),
+    draggable: true,
+  });
+  predictionLocationMarker.bindPopup("Prediction location — set details and click Predict", { className: "card-panel" });
+  predictionLocationMarker.on("dragend", () => updatePredictLocationStatus());
+  predictedMarkerLayer.addLayer(predictionLocationMarker);
+  dropPinMode = false;
+  document.getElementById("dropPinBtn").textContent = "Drop pin on map";
+  updatePredictLocationStatus();
+}
+
 function setupPredictForm() {
   const form = document.getElementById("predictForm");
   const typeSelect = document.getElementById("predictType");
   const resultEl = document.getElementById("predictResult");
+  const dropPinBtn = document.getElementById("dropPinBtn");
+
+  if (dropPinBtn) {
+    dropPinBtn.addEventListener("click", () => {
+      if (typeof map === "undefined" || !map) {
+        resultEl.textContent = "Load the map first.";
+        resultEl.classList.add("error");
+        return;
+      }
+      dropPinMode = true;
+      dropPinBtn.textContent = "Click map to place pin…";
+      resultEl.textContent = "";
+      resultEl.classList.remove("error");
+    });
+  }
 
   (async () => {
     const types = await fetchTypes();
@@ -188,19 +298,35 @@ function setupPredictForm() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!predictionLocationMarker) {
+      resultEl.textContent = "Drop a pin on the map to set location first.";
+      resultEl.classList.add("error");
+      return;
+    }
     resultEl.textContent = "Predicting…";
     resultEl.classList.remove("error");
     const beds = parseInt(document.getElementById("predictBeds").value, 10) || 0;
     const baths = parseFloat(document.getElementById("predictBaths").value) || 0;
     const property_sqft = parseFloat(document.getElementById("predictSqft").value) || 0;
     const type = typeSelect.value || "Condo for sale";
-    const zip = (document.getElementById("predictZip").value || "").replace(/\D/g, "").slice(0, 5);
+    const latlng = predictionLocationMarker.getLatLng();
+    const zip = getPredictZipValue();
+
+    const body = {
+      beds,
+      baths,
+      property_sqft,
+      type,
+      zip,
+      lat: latlng.lat,
+      lng: latlng.lng,
+    };
 
     try {
       const res = await fetch(`${PREDICT_API_BASE}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ beds, baths, property_sqft, type, zip }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -213,7 +339,6 @@ function setupPredictForm() {
       resultEl.classList.remove("error");
 
       if (typeof map !== "undefined" && map && predictedMarkerLayer && data.lat != null && data.lng != null) {
-        predictedMarkerLayer.clearLayers();
         const listing = {
           lat: data.lat,
           lng: data.lng,
@@ -225,11 +350,16 @@ function setupPredictForm() {
           type,
           isPredicted: true,
         };
+        if (predictionLocationMarker) {
+          predictedMarkerLayer.removeLayer(predictionLocationMarker);
+          predictionLocationMarker = null;
+        }
         const marker = L.marker([data.lat, data.lng], { icon: createMarkerIcon() });
         marker.bindPopup(`Predicted: ${formatPrice(price)} · ${beds} bed, ${baths} bath · ${type}`, { className: "card-panel" });
         marker.listing = listing;
         marker.on("click", () => updateSideCard(listing));
         predictedMarkerLayer.addLayer(marker);
+        updatePredictLocationStatus();
         map.setView([data.lat, data.lng], Math.max(map.getZoom(), 13));
       }
     } catch (err) {

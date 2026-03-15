@@ -7,7 +7,7 @@
   --accent-strong: #354032;
   --accent-muted: #5a7d55;
   --text: #2c3029;
-  --border: #4d7348;
+  --border: #4d7348;  
   --border-light: rgba(61, 74, 60, 0.35);
 }
 
@@ -240,6 +240,18 @@ body::after {
   outline: none;
   border-color: var(--accent-muted);
 }
+.predict-zip-display {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--accent-strong);
+  min-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
 .predict-btn {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
@@ -259,6 +271,23 @@ body::after {
 .predict-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.predict-btn-secondary {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent-muted);
+}
+.predict-btn-secondary:hover {
+  background: var(--border-light);
+}
+.predict-location-row {
+  margin-top: 0.25rem;
+}
+.predict-location-status {
+  font-size: 0.7rem;
+  color: var(--accent-muted);
+  margin-top: 0.35rem;
+  min-height: 1.2em;
 }
 .predict-result {
   font-size: 0.85rem;
@@ -364,6 +393,14 @@ body::after {
 .marker-pin.highlight {
   background: var(--accent-strong);
   box-shadow: 0 0 0 2px var(--bg-panel);
+}
+
+.marker-pin-location {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-color: var(--accent-strong);
+  background: var(--bg-panel);
 }
 
 /* Footer – green bar with paper texture, cream text (match header) */
